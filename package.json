@@ -1,0 +1,11 @@
+{
+  "name": "whatsblitz",
+  "version": "1.0.0",
+  "description": "Personalized WhatsApp Messaging Extension",
+  "scripts": {
+    "convert-icons": "node convert_icons.js"
+  },
+  "dependencies": {
+    "sharp": "^0.32.1"
+  }
+} 

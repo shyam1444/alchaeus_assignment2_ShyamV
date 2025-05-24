@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WhatsBlitz</title>
+    <style>
+        body {
+            width: 400px;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .file-upload {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .file-upload:hover {
+            border-color: #128C7E;
+        }
+        .file-upload.highlight {
+            border-color: #128C7E;
+            background-color: rgba(18, 140, 126, 0.1);
+        }
+        #whatsblitz-file-input {
+            display: none;
+        }
+        .file-name {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        .preview-section {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .preview-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .preview-item:last-child {
+            border-bottom: none;
+        }
+        .start-button {
+            background-color: #128C7E;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        .start-button:hover {
+            background-color: #075E54;
+        }
+        .start-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>WhatsBlitz</h2>
+        <div class="file-upload" id="drop-area">
+            <label for="whatsblitz-file-input">
+                <div>📁 Drop your Excel/CSV file here or click to upload</div>
+                <div class="file-name" id="whatsblitz-file-name">No file selected</div>
+            </label>
+            <input type="file" id="whatsblitz-file-input" accept=".xlsx,.xls,.csv" />
+        </div>
+        <div class="preview-section" id="preview-section" style="display: none;">
+            <h3>Preview</h3>
+            <div id="preview-content"></div>
+        </div>
+        <button class="start-button" id="start-button" disabled>Start Sending Messages</button>
+        <div class="status" id="status"></div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="dataHandler.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html> 

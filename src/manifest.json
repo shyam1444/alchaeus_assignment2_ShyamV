@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "WhatsBlitz",
+  "version": "1.0",
+  "description": "A Chrome extension for WhatsApp Web automation.",
+  "permissions": [
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "*://web.whatsapp.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://web.whatsapp.com/*"],
+      "js": ["xlsx.full.min.js", "content.js", "dataHandler.js"]
+    }
+  ]
+} 

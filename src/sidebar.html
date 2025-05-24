@@ -1,0 +1,29 @@
+<div class="whatsblitz-sidebar">
+    <h3>WhatsBlitz</h3>
+    
+    <div class="whatsblitz-file-upload" id="whatsblitz-sidebar-drop-area">
+        <label for="whatsblitz-sidebar-file-input">
+            <div>📁 Drop your Excel/CSV file here or click to upload</div>
+            <div class="whatsblitz-file-name" id="whatsblitz-sidebar-file-name">No file selected</div>
+        </label>
+        <input type="file" id="whatsblitz-sidebar-file-input" accept=".xlsx,.xls,.csv" />
+    </div>
+    
+    <div class="whatsblitz-preview-section" id="whatsblitz-sidebar-preview-section" style="display: none;">
+        <h4>Preview</h4>
+        <div id="whatsblitz-sidebar-preview-content"></div>
+    </div>
+
+    <button class="whatsblitz-start-button" id="whatsblitz-sidebar-start-button" disabled>Start Sending Messages</button>
+
+    <div class="whatsblitz-progress-bar-container" style="display: none;">
+        <div class="whatsblitz-progress-bar" id="whatsblitz-sidebar-progress-bar">0%</div>
+    </div>
+
+    <div class="whatsblitz-status" id="whatsblitz-sidebar-status">Please upload an Excel or CSV file.</div>
+
+    <div class="whatsblitz-history-section" id="whatsblitz-sidebar-history-section" style="display: none;">
+        <h4>History</h4>
+        <div id="whatsblitz-sidebar-history-content"></div>
+    </div>
+</div> 
