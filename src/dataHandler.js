@@ -1,8 +1,11 @@
-// Get the file input and the drag-and-drop area (label)
-const fileInput = document.getElementById('whatsblitz-file-input');
-const dropArea = document.querySelector('label[for="whatsblitz-file-input"]');
-const fileNameDisplay = document.getElementById('whatsblitz-file-name');
-const statusDiv = document.getElementById('status'); // Get status div from popup.html
+// dataHandler.js - Handles file reading, parsing, and data validation.
+// It communicates with UI scripts (popup.js, sidebar.js) via chrome.runtime.sendMessage.
+
+// Remove direct DOM element references as this script runs in an isolated world.
+// const fileInput = document.getElementById('whatsblitz-file-input');
+// const dropArea = document.querySelector('label[for="whatsblitz-file-input"]');
+// const fileNameDisplay = document.getElementById('whatsblitz-file-name');
+// const statusDiv = document.getElementById('status');
 
 let parsedData = []; // Array to store the parsed data
 
@@ -24,6 +27,11 @@ function processDataWithPlaceholders(data) {
 // Function to validate the uploaded data
 function validateData(data) {
     if (!data || data.length === 0) {
+        // Send validation error message
+         chrome.runtime.sendMessage({
+            type: 'validationError',
+            text: "File is empty or could not be parsed."
+        });
         return { isValid: false, message: "File is empty or could not be parsed." };
     }
 
@@ -32,30 +40,48 @@ function validateData(data) {
 
     const missingHeaders = requiredHeaders.filter(header => !headers.includes(header));
     if (missingHeaders.length > 0) {
+        // Send validation error message
+        chrome.runtime.sendMessage({
+            type: 'validationError',
+            text: `Missing required columns: ${missingHeaders.join(', ')}`
+        });
         return { isValid: false, message: `Missing required columns: ${missingHeaders.join(', ')}` };
     }
 
     // Basic validation for phone numbers (can be enhanced)
     const invalidContacts = data.filter(contact => !contact['Phone Number'] || isNaN(contact['Phone Number']));
     if (invalidContacts.length > 0) {
+         // Send validation error message
+         chrome.runtime.sendMessage({
+            type: 'validationError',
+            text: `Invalid or missing phone numbers found in ${invalidContacts.length} row(s).`
+        });
         return { isValid: false, message: `Invalid or missing phone numbers found in ${invalidContacts.length} row(s).` };
     }
+
+    // Send status that validation succeeded
+     chrome.runtime.sendMessage({
+        type: 'status',
+        text: "Data validated successfully."
+     });
 
     return { isValid: true, message: "Data validated successfully." };
 }
 
-// Function to handle file processing
+// Function to handle file processing (called by UI scripts)
 function handleFile(file) {
   if (!file) {
-    fileNameDisplay.textContent = 'No file selected.';
-    parsedData = [];
-    // Notify popup that data is cleared
-    window.dispatchEvent(new CustomEvent('dataParsed', { detail: parsedData }));
+     chrome.runtime.sendMessage({
+        type: 'status',
+        text: 'No file selected.'
+     });
     return;
   }
 
-  fileNameDisplay.textContent = `Selected file: ${file.name}`;
-  statusDiv.textContent = 'Processing file...';
+  chrome.runtime.sendMessage({
+      type: 'status',
+      text: `Processing file: ${file.name}`
+  });
 
   const reader = new FileReader();
 
@@ -82,11 +108,10 @@ function handleFile(file) {
             },
             error: function(error) {
                 console.error("Error parsing CSV file:", error);
-                fileNameDisplay.textContent = 'Error processing file.';
-                statusDiv.textContent = 'Error processing file.';
-                parsedData = [];
-                // Notify popup that data is cleared
-                window.dispatchEvent(new CustomEvent('dataParsed', { detail: parsedData }));
+                chrome.runtime.sendMessage({
+                    type: 'error',
+                    text: `Error parsing CSV file: ${error.message}`
+                });
             }
         });
         // For PapaParse, the rest of the logic continues in the complete callback
@@ -102,11 +127,10 @@ function handleFile(file) {
 
     } catch (error) {
       console.error("Error parsing file:", error);
-      fileNameDisplay.textContent = 'Error processing file.';
-      statusDiv.textContent = 'Error processing file.';
-      parsedData = [];
-      // Notify popup that data is cleared
-      window.dispatchEvent(new CustomEvent('dataParsed', { detail: parsedData }));
+       chrome.runtime.sendMessage({
+            type: 'error',
+            text: `Error parsing file: ${error.message}`
+        });
     }
   };
 
@@ -123,14 +147,10 @@ function processAndValidateData(rawData) {
     console.log("Raw file data:", rawData);
 
     const validationResult = validateData(rawData);
-    
+
     if (!validationResult.isValid) {
         console.error("Data validation failed:", validationResult.message);
-        fileNameDisplay.textContent = 'Validation failed.';
-        statusDiv.textContent = `Error: ${validationResult.message}`;
-        parsedData = [];
-        // Notify popup that data is cleared
-        window.dispatchEvent(new CustomEvent('dataParsed', { detail: parsedData }));
+        // The validation function already sends a message, just return.
         return;
     }
 
@@ -139,64 +159,36 @@ function processAndValidateData(rawData) {
 
     console.log("Processed data:", parsedData);
 
-    // Display parsed data in the UI (handled by popup.js)
-    fileNameDisplay.textContent += ` - ${parsedData.length} records processed.`;
-    statusDiv.textContent = 'File processed and data ready.';
-    
-    // Notify popup that data is ready
-    window.dispatchEvent(new CustomEvent('dataParsed', { detail: parsedData }));
+    // Notify UI that data is ready and send the data
+     chrome.runtime.sendMessage({
+        type: 'dataReady',
+        data: parsedData,
+        text: `File processed with ${parsedData.length} records. Data ready to send.`
+     });
 }
 
-// Event listener for file input change
-if (fileInput) {
-  fileInput.addEventListener('change', (event) => {
-    const file = event.target.files[0];
-    handleFile(file);
-  });
-} else {
-  console.error("File input element not found.");
-}
-
-// Event listeners for drag and drop
-if (dropArea) {
-  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    dropArea.addEventListener(eventName, preventDefaults, false);
-  });
-
-  ['dragenter', 'dragover'].forEach(eventName => {
-    dropArea.addEventListener(eventName, highlight, false);
-  });
-
-  ['dragleave', 'drop'].forEach(eventName => {
-    dropArea.addEventListener(eventName, unhighlight, false);
-  });
-
-  dropArea.addEventListener('drop', handleDrop, false);
-} else {
-   console.error("Drop area element not found.");
-}
-
-function preventDefaults (e) {
-  e.preventDefault();
-  e.stopPropagation();
-}
-
-function highlight(e) {
-  dropArea.classList.add('highlight');
-}
-
-function unhighlight(e) {
-  dropArea.classList.remove('highlight');
-}
-
-function handleDrop(e) {
-  const dt = e.dataTransfer;
-  const files = dt.files;
-
-  handleFile(files[0]);
-}
+// Expose handleFile for UI scripts to call via a namespace
+window.dataHandler = { 
+    handleFile: handleFile
+    // processAndValidateData: processAndValidateData // Keep internal unless specifically needed elsewhere
+};
 
 // Add SheetJS and PapaParse scripts to be loaded in popup.html
 // These will be added directly in popup.html for simplicity in this case
 // <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 // <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script> 
+
+// Expose handleFile globally so popup.js/sidebar.js can call it
+// window.handleFile = handleFile;
+// window.preventDefaults = preventDefaults; // Expose if needed by UI scripts
+// window.highlight = highlight;         // Expose if needed by UI scripts
+// window.unhighlight = unhighlight;       // Expose if needed by UI scripts
+// window.handleDrop = handleDrop;         // Expose if needed by UI scripts - though sidebar/popup should call handleFile directly
+
+// Remove direct DOM manipulation for status and file name display,
+// rely on messages sent back to the UI scripts.
+// statusDiv and fileNameDisplay are likely null or refer to elements in dataHandler's context,
+// not the popup/sidebar DOM.
+// Remove the following lines if they exist and are for direct DOM manipulation:
+// const fileNameDisplay = document.getElementById('whatsblitz-file-name');
+// const statusDiv = document.getElementById('status'); 
